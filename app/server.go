@@ -38,12 +38,14 @@ func handleConnection(conn net.Conn) {
 
 	buffer := make([]byte, 1024)
 
-	_, err := conn.Read(buffer)
+	request, err := conn.Read(buffer)
 
 	if err != nil {
 		fmt.Println("Error reading from connection: ", err.Error())
 		return
 	}
+
+	fmt.Println("request is: ", request)
 
 	response := "HTTP/1.1 200 OK\r\n\r\n"
 
