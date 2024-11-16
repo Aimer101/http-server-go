@@ -62,8 +62,8 @@ func handleConnection(conn net.Conn) {
 
 	switch request.Endpoint[0] {
 
-	case "abcdefg":
-		response = "HTTP/1.1 404 Not Found\r\n\r\n"
+	case "":
+		response = "HTTP/1.1 200 OK\r\n\r\n"
 
 	case "echo":
 		response = helper.ReturnHttpOkWithResponseBody(request.Endpoint[1])
@@ -71,7 +71,7 @@ func handleConnection(conn net.Conn) {
 	case "user-agent":
 		response = helper.ReturnHttpOkWithResponseBody(request.Headers["User-Agent"])
 	default:
-		response = "HTTP/1.1 200 OK\r\n\r\n"
+		response = "HTTP/1.1 404 Not Found\r\n\r\n"
 
 	}
 
