@@ -66,9 +66,15 @@ func ReturnHttpOkWithResponseBody(body string, headers map[string]string) string
 	builder.WriteString("Content-Length: " + strconv.Itoa(len(body)) + "\r\n")
 
 	if _, ok := headers["Accept-Encoding"]; ok {
-		if strings.ToLower(headers["Accept-Encoding"]) == "gzip" {
-			builder.WriteString("Content-Encoding: " + headers["Accept-Encoding"] + "\r\n")
+		compression_types := strings.Split(headers["Accept-Encoding"], ",")
+
+		for _, compression_type := range compression_types {
+
+			if strings.ToLower(strings.TrimSpace(compression_type)) == "gzip" {
+				builder.WriteString("Content-Encoding: " + compression_type + "\r\n")
+			}
 		}
+
 	}
 
 	builder.WriteString("\r\n")
@@ -84,8 +90,12 @@ func ReturnFileHttpOkWithResponseBody(data *[]byte, headers map[string]string) s
 	builder.WriteString("Content-Length: " + strconv.Itoa(len(*data)) + "\r\n")
 
 	if _, ok := headers["Accept-Encoding"]; ok {
-		if strings.ToLower(headers["Accept-Encoding"]) == "gzip" {
-			builder.WriteString("Content-Encoding: " + headers["Accept-Encoding"] + "\r\n")
+		compression_types := strings.Split(headers["Accept-Encoding"], ",")
+
+		for _, compression_type := range compression_types {
+			if strings.ToLower(strings.TrimSpace(compression_type)) == "gzip" {
+				builder.WriteString("Content-Encoding: " + compression_type + "\r\n")
+			}
 		}
 	}
 
