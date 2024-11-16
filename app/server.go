@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+
+	"github.com/codecrafters-io/http-server-starter-go/helper"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports above (feel free to remove this!)
@@ -19,6 +21,8 @@ func main() {
 	}
 
 	defer l.Close()
+
+	fmt.Println("Listening on port 4221")
 
 	for {
 		conn, err := l.Accept()
@@ -38,19 +42,42 @@ func handleConnection(conn net.Conn) {
 
 	buffer := make([]byte, 1024)
 
-	request, err := conn.Read(buffer)
+	nBytes, err := conn.Read(buffer)
 
 	if err != nil {
 		fmt.Println("Error reading from connection: ", err.Error())
 		return
 	}
 
-	fmt.Println("request is: ", request)
+	request, err := helper.ParseRawBuffer(buffer, nBytes)
 
-	response := "HTTP/1.1 200 OK\r\n\r\n"
+	fmt.Println("Parsed request: ", request)
+
+	if err != nil {
+		fmt.Println("Error parsing request: ", err.Error())
+		return
+	}
+
+	var response string
+
+	switch request.Endpoint[0] {
+
+	case "abcdefg":
+		response = "HTTP/1.1 404 Not Found\r\n\r\n"
+
+	case "echo":
+		response = helper.ReturnHttpOkWithResponseBody(request.Endpoint[1])
+
+	case "user-agent":
+		response = helper.ReturnHttpOkWithResponseBody(request.Headers["User-Agent"])
+	default:
+		response = "HTTP/1.1 200 OK\r\n\r\n"
+
+	}
+
+	fmt.Println("Response is : ", response)
 
 	_, err = conn.Write([]byte(response))
-
 	if err != nil {
 		fmt.Println("Error writing to connection: ", err.Error())
 		return
