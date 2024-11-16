@@ -1,6 +1,8 @@
 package helper
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"strconv"
 	"strings"
@@ -63,7 +65,6 @@ func ReturnHttpOkWithResponseBody(body string, headers map[string]string) string
 	var builder strings.Builder
 	builder.WriteString("HTTP/1.1 200 OK\r\n")
 	builder.WriteString("Content-Type: text/plain\r\n")
-	builder.WriteString("Content-Length: " + strconv.Itoa(len(body)) + "\r\n")
 
 	if _, ok := headers["Accept-Encoding"]; ok {
 		compression_types := strings.Split(headers["Accept-Encoding"], ",")
@@ -71,9 +72,21 @@ func ReturnHttpOkWithResponseBody(body string, headers map[string]string) string
 		for _, compression_type := range compression_types {
 
 			if strings.ToLower(strings.TrimSpace(compression_type)) == "gzip" {
+				var buffer bytes.Buffer
+
+				w := gzip.NewWriter(&buffer)
+				w.Write([]byte(body))
+				w.Close()
+
+				body = buffer.String()
+
+				builder.WriteString("Content-Length: " + strconv.Itoa(len(body)) + "\r\n")
+
 				builder.WriteString("Content-Encoding: " + compression_type + "\r\n")
 			}
 		}
+	} else {
+		builder.WriteString("Content-Length: " + strconv.Itoa(len(body)) + "\r\n")
 
 	}
 

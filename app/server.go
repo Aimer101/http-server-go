@@ -98,9 +98,6 @@ func handleConnection(conn net.Conn, directory string) {
 	} else if strings.ToUpper(request.Method) == "POST" {
 		switch request.Endpoint[0] {
 		case "files":
-			fmt.Println("file name is: ", request.Endpoint[1])
-			fmt.Println("body is: ", *request.Body)
-
 			fullPath := filepath.Join(directory, request.Endpoint[1])
 
 			if err := os.WriteFile(fullPath, []byte(*request.Body), 0644); err == nil {
