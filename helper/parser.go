@@ -2,7 +2,6 @@ package helper
 
 import (
 	"fmt"
-	"os"
 	"strings"
 )
 
@@ -10,6 +9,7 @@ type Request struct {
 	Method   string
 	Endpoint []string
 	Headers  map[string]string // Add a map to store headers
+	Body     *string
 }
 
 func ParseRawBuffer(buffer []byte, nBytes int) (Request, error) {
@@ -21,6 +21,10 @@ func ParseRawBuffer(buffer []byte, nBytes int) (Request, error) {
 
 	if len(lines) == 0 || len(lines[0]) == 0 {
 		return Request{}, fmt.Errorf("invalid HTTP request format")
+	}
+
+	for i, line := range lines {
+		fmt.Printf("%d: %s\n", i, line)
 	}
 
 	requestLine := strings.Split(lines[0], " ") // 0th is the request method, 1 is endpoint, 2 is http version
@@ -37,17 +41,26 @@ func ParseRawBuffer(buffer []byte, nBytes int) (Request, error) {
 		}
 	}
 
+	var body *string
+
+	// see if headers contain Content-Length
+	if _, ok := headers["Content-Length"]; ok {
+		if strings.ToUpper(requestLine[0]) == "POST" {
+			body = &lines[len(lines)-1]
+		}
+	}
+
 	return Request{
 		Method:   requestLine[0],
 		Endpoint: strings.Split(strings.Trim(requestLine[1], "/"), "/"),
 		Headers:  headers,
+		Body:     body,
 	}, nil
 }
 
-func ReturnHttpOkWithResponseBody(body string, contentType string) string {
+func ReturnHttpOkWithResponseBody(body string) string {
 	return fmt.Sprintf(
-		"HTTP/1.1 200 OK\r\nContent-Type: %v\r\nContent-Length: %d\r\n\r\n%s",
-		contentType,
+		"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
 		len(body),
 		body,
 	)
@@ -63,17 +76,4 @@ func ReturnFileHttpOkWithResponseBody(data *[]byte) string {
 
 func ReturnHttpNotFound() string {
 	return "HTTP/1.1 404 Not Found\r\n\r\n"
-}
-
-func IsFileExist(path string) bool {
-	fmt.Println("path is : ", path)
-	file, err := os.Open(path)
-
-	if err != nil {
-		return false
-	}
-
-	defer file.Close()
-
-	return true
 }

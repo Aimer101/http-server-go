@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/codecrafters-io/http-server-starter-go/helper"
 )
@@ -66,32 +67,49 @@ func handleConnection(conn net.Conn, directory string) {
 
 	var response string
 
-	switch request.Endpoint[0] {
+	if strings.ToUpper(request.Method) == "GET" {
+		switch request.Endpoint[0] {
 
-	case "":
-		response = "HTTP/1.1 200 OK\r\n\r\n"
+		case "":
+			response = "HTTP/1.1 200 OK\r\n\r\n"
 
-	case "files":
-		fmt.Println("file name is: ", request.Endpoint[1])
+		case "files":
+			fmt.Println("file name is: ", request.Endpoint[1])
 
-		fullPath := filepath.Join(directory, request.Endpoint[1])
+			fullPath := filepath.Join(directory, request.Endpoint[1])
 
-		file, err := os.ReadFile(fullPath)
+			file, err := os.ReadFile(fullPath)
 
-		if err != nil {
+			if err != nil {
+				response = helper.ReturnHttpNotFound()
+			} else {
+				response = helper.ReturnFileHttpOkWithResponseBody(&file)
+			}
+
+		case "echo":
+			response = helper.ReturnHttpOkWithResponseBody(request.Endpoint[1])
+
+		case "user-agent":
+			response = helper.ReturnHttpOkWithResponseBody(request.Headers["User-Agent"])
+		default:
 			response = helper.ReturnHttpNotFound()
-		} else {
-			response = helper.ReturnFileHttpOkWithResponseBody(&file)
+
 		}
+	} else if strings.ToUpper(request.Method) == "POST" {
+		switch request.Endpoint[0] {
+		case "files":
+			fmt.Println("file name is: ", request.Endpoint[1])
+			fmt.Println("body is: ", *request.Body)
 
-	case "echo":
-		response = helper.ReturnHttpOkWithResponseBody(request.Endpoint[1], "text/plain")
+			fullPath := filepath.Join(directory, request.Endpoint[1])
 
-	case "user-agent":
-		response = helper.ReturnHttpOkWithResponseBody(request.Headers["User-Agent"], "text/plain")
-	default:
-		response = helper.ReturnHttpNotFound()
+			if err := os.WriteFile(fullPath, []byte(*request.Body), 0644); err == nil {
+				response = "HTTP/1.1 201 Created\r\n\r\n"
+			} else {
+				response = "HTTP/1.1 400 Bad Request\r\n\r\n"
+			}
 
+		}
 	}
 
 	fmt.Println("Response is : ", response)
