@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 
 	"github.com/codecrafters-io/http-server-starter-go/helper"
 )
@@ -13,6 +15,8 @@ var _ = net.Listen
 var _ = os.Exit
 
 func main() {
+	directory := flag.String("directory", "", "directory for serving files")
+	flag.Parse()
 
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
@@ -32,15 +36,17 @@ func main() {
 			continue
 		}
 
-		go handleConnection(conn)
+		go handleConnection(conn, *directory)
 	}
 
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, directory string) {
 	defer conn.Close()
 
 	buffer := make([]byte, 1024)
+
+	fmt.Println("directory is : ", directory)
 
 	nBytes, err := conn.Read(buffer)
 
@@ -65,13 +71,26 @@ func handleConnection(conn net.Conn) {
 	case "":
 		response = "HTTP/1.1 200 OK\r\n\r\n"
 
+	case "files":
+		fmt.Println("file name is: ", request.Endpoint[1])
+
+		fullPath := filepath.Join(directory, request.Endpoint[1])
+
+		file, err := os.ReadFile(fullPath)
+
+		if err != nil {
+			response = helper.ReturnHttpNotFound()
+		} else {
+			response = helper.ReturnFileHttpOkWithResponseBody(&file)
+		}
+
 	case "echo":
-		response = helper.ReturnHttpOkWithResponseBody(request.Endpoint[1])
+		response = helper.ReturnHttpOkWithResponseBody(request.Endpoint[1], "text/plain")
 
 	case "user-agent":
-		response = helper.ReturnHttpOkWithResponseBody(request.Headers["User-Agent"])
+		response = helper.ReturnHttpOkWithResponseBody(request.Headers["User-Agent"], "text/plain")
 	default:
-		response = "HTTP/1.1 404 Not Found\r\n\r\n"
+		response = helper.ReturnHttpNotFound()
 
 	}
 

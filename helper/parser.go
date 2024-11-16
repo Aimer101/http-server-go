@@ -2,6 +2,7 @@ package helper
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -43,10 +44,36 @@ func ParseRawBuffer(buffer []byte, nBytes int) (Request, error) {
 	}, nil
 }
 
-func ReturnHttpOkWithResponseBody(body string) string {
+func ReturnHttpOkWithResponseBody(body string, contentType string) string {
 	return fmt.Sprintf(
-		"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+		"HTTP/1.1 200 OK\r\nContent-Type: %v\r\nContent-Length: %d\r\n\r\n%s",
+		contentType,
 		len(body),
 		body,
 	)
+}
+
+func ReturnFileHttpOkWithResponseBody(data *[]byte) string {
+	return fmt.Sprintf(
+		"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s",
+		len(*data),
+		*data,
+	)
+}
+
+func ReturnHttpNotFound() string {
+	return "HTTP/1.1 404 Not Found\r\n\r\n"
+}
+
+func IsFileExist(path string) bool {
+	fmt.Println("path is : ", path)
+	file, err := os.Open(path)
+
+	if err != nil {
+		return false
+	}
+
+	defer file.Close()
+
+	return true
 }
