@@ -2,6 +2,7 @@ package helper
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -58,20 +59,39 @@ func ParseRawBuffer(buffer []byte, nBytes int) (Request, error) {
 	}, nil
 }
 
-func ReturnHttpOkWithResponseBody(body string) string {
-	return fmt.Sprintf(
-		"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
-		len(body),
-		body,
-	)
+func ReturnHttpOkWithResponseBody(body string, headers map[string]string) string {
+	var builder strings.Builder
+	builder.WriteString("HTTP/1.1 200 OK\r\n")
+	builder.WriteString("Content-Type: text/plain\r\n")
+	builder.WriteString("Content-Length: " + strconv.Itoa(len(body)) + "\r\n")
+
+	if _, ok := headers["Accept-Encoding"]; ok {
+		if strings.ToLower(headers["Accept-Encoding"]) == "gzip" {
+			builder.WriteString("Content-Encoding: " + headers["Accept-Encoding"] + "\r\n")
+		}
+	}
+
+	builder.WriteString("\r\n")
+	builder.WriteString(body)
+
+	return builder.String()
 }
 
-func ReturnFileHttpOkWithResponseBody(data *[]byte) string {
-	return fmt.Sprintf(
-		"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s",
-		len(*data),
-		*data,
-	)
+func ReturnFileHttpOkWithResponseBody(data *[]byte, headers map[string]string) string {
+	var builder strings.Builder
+	builder.WriteString("HTTP/1.1 200 OK\r\n")
+	builder.WriteString("Content-Type: application/octet-stream\r\n")
+	builder.WriteString("Content-Length: " + strconv.Itoa(len(*data)) + "\r\n")
+
+	if _, ok := headers["Accept-Encoding"]; ok {
+		if strings.ToLower(headers["Accept-Encoding"]) == "gzip" {
+			builder.WriteString("Content-Encoding: " + headers["Accept-Encoding"] + "\r\n")
+		}
+	}
+
+	builder.WriteString("\r\n")
+	builder.WriteString(string(*data))
+	return builder.String()
 }
 
 func ReturnHttpNotFound() string {

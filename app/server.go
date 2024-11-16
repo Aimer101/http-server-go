@@ -83,14 +83,14 @@ func handleConnection(conn net.Conn, directory string) {
 			if err != nil {
 				response = helper.ReturnHttpNotFound()
 			} else {
-				response = helper.ReturnFileHttpOkWithResponseBody(&file)
+				response = helper.ReturnFileHttpOkWithResponseBody(&file, request.Headers)
 			}
 
 		case "echo":
-			response = helper.ReturnHttpOkWithResponseBody(request.Endpoint[1])
+			response = helper.ReturnHttpOkWithResponseBody(request.Endpoint[1], request.Headers)
 
 		case "user-agent":
-			response = helper.ReturnHttpOkWithResponseBody(request.Headers["User-Agent"])
+			response = helper.ReturnHttpOkWithResponseBody(request.Headers["User-Agent"], request.Headers)
 		default:
 			response = helper.ReturnHttpNotFound()
 
